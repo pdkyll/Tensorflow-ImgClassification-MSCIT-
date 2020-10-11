@@ -1,11 +1,11 @@
 
 device = "cuda:0"
 
-train_path = 'data/train/'
-test_path = 'data/test/'
+train_path = 'data/cifar10png/train'
+test_path = 'data/catdog/test'
 checkpoint_dir = "models/"
 
-classes = ['three', 'four', 'eight']
+classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 total_class = len(classes)
 img_size = 224
 
@@ -19,5 +19,4 @@ early_stopping = False
 
 #mobilenet v2 modelchannel
 modelchannel = [1,1,1,1,1,1]
-
 
