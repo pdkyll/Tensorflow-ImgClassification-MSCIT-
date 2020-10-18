@@ -138,7 +138,25 @@ Please read the trainer.py file
  Please read the trainer.py file
  
  1. In image classification , we usually use something called cross entrophy
+ 
+ 
+ ![alt text](https://ml-cheatsheet.readthedocs.io/en/latest/_images/cross_entropy.png
+ 
+  https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.
+ 
+            self.cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.model.getOutput(), labels=self.y_true)
+ 
+ Detailed Explanation (In Simplified Chinese): https://zhuanlan.zhihu.com/p/35709485 (About the calculation of loss using Cross Entro.)
+ 
+ 2. For my code , I use Adam Optimizer and a Learning rate with Exponential Decay
+ 
+            self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=True)
+
+            self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=0.01).minimize(self.cost, self.global_step)
+            
+![alt text](https://live.staticflickr.com/65535/50500409046_e7e3f2a7e2_w.jpg)
   
+
 
 Brief Introduction About CNN: 
 
@@ -150,14 +168,16 @@ Pooling Layer Simplify the features and make it smaller
 
 ![alt text](https://live.staticflickr.com/65535/50500453686_678f4d7c79_z.jpg)
 
-Activation Layer makes sure no negative values exist (Actibvation function : Linear(wont elminate -ve),  Relu, Tanh, Swish activation function (swish is a quite new act. func and it is proved to increase the acc of a network) 
+Relu Activation Layer makes sure no negative values exist (Activation function : Linear(wont elminate -ve),  Relu, Tanh, Swish activation function (swish is a quite new act. func and it is proved to increase the acc of a network) 
 
 ![alt text](https://live.staticflickr.com/65535/50499740523_a93e59a974_z.jpg)
 
-Some basic knowledge abt CNN  (in Chinese though ): https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-ml-note-convolution-neural-network-%E5%8D%B7%E7%A9%8D%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-bfa8566744e9
+In the Final Layer, we will add Fully Connection Layer and Softmax Function (For cases of classification)
+
+Some basic knowledge abt CNN  (in Trad Chinese): https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-ml-note-convolution-neural-network-%E5%8D%B7%E7%A9%8D%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-bfa8566744e9
 
 
-Detailed explanation of the two model architecture: (Underconstruction)
+Model architecture: (Underconstruction)
 
 1. Lenet5 Architecture:
 ![alt text](https://miro.medium.com/max/700/0*H9_eGAtkQXJXtkoK)
