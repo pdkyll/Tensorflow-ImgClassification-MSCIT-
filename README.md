@@ -78,13 +78,32 @@ Here is the result of mobilenetv2 , acc ~ 0.84 , after 30 epoches of training
 To view the result of the two models , Download the following tensorboard graph: 
 https://drive.google.com/file/d/1etOCcu3eAZvEH_KY_rYFKighLdfT7CIt/view?usp=sharing
 
-Detailed explanation of the two model architecture:
+
+Explanation About the Code:
+
+
+
+Brief Introduction About CNN: 
+
+Convolutional Layer extract features from the images
+
+![alt text](https://live.staticflickr.com/65535/50500611557_cfc43b309a_z.jpg)
+
+Pooling Layer Simplify the features and make it smaller
+
+![alt text](https://live.staticflickr.com/65535/50500453686_678f4d7c79_z.jpg)
+
+Activation Layer makes sure no negative values exist (Actibvation function : Linear(wont elminate -ve),  Relu, Tanh, Swish activation function (swish is a quite new act. func and it is proved to increase the acc of a network) 
+
+![alt text](https://live.staticflickr.com/65535/50499740523_a93e59a974_z.jpg)
+
 Some basic knowledge abt CNN  (in Chinese though ): https://medium.com/%E9%9B%9E%E9%9B%9E%E8%88%87%E5%85%94%E5%85%94%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%B8%96%E7%95%8C/%E6%A9%9F%E5%99%A8%E5%AD%B8%E7%BF%92-ml-note-convolution-neural-network-%E5%8D%B7%E7%A9%8D%E7%A5%9E%E7%B6%93%E7%B6%B2%E8%B7%AF-bfa8566744e9
+
+
+Detailed explanation of the two model architecture: (Underconstruction)
 
 1. Lenet5 Architecture:
 ![alt text](https://miro.medium.com/max/700/0*H9_eGAtkQXJXtkoK)
-
-
 
 2. Mobilenetv2 Architecture
 ![alt text](https://pic4.zhimg.com/v2-22299048d725a902a84010675fe84a13_r.jpg)
