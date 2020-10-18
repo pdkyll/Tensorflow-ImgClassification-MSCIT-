@@ -227,7 +227,7 @@ Detailed Explanation of CNN(Written in English): https://medium.com/technologyma
 
 But what is zero-padding?
 
-![alt text](https://deeplizard.com/images/zero%20padding%20example.PNG)
+![alt text](https://miro.medium.com/max/666/1*noYcUAa_P8nRilg3Lt_nuA.png)
 
       class LeNet:
 
