@@ -205,7 +205,7 @@ We need to use this equation :
 
 ![alt text](https://i.stack.imgur.com/vD1u3.png)
 
-              # TODO: Layer 1: Convolutional. Input = 32x32x1. Output = 28x28x6.
+              # TODO: Layer 1: Convolutional. Input = 32x32x3. Output = 28x28x6.
               conv1_w = tf.Variable(tf.truncated_normal(shape=[5, 5, 3, 6], mean=mu, stddev=sigma))
               conv1_b = tf.Variable(tf.zeros(6))
               conv1 = tf.nn.conv2d(self.inputImage, conv1_w, strides=[1, 1, 1, 1], padding='VALID') + conv1_b
