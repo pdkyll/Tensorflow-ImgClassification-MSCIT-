@@ -15,8 +15,7 @@ class Trainer:
     def __init__(self,num_channels = config.numchannels):
         # image dimensions (only squares for now)
         self.img_size = config.img_size
-        # Size of image when flattened to a single dimension
-        self.img_size_flat = self.img_size * self.img_size * num_channels
+
         # Tuple with height and width of images used to reshape arrays.
         self.img_shape = (self.img_size, self.img_size)
         # class info
@@ -32,11 +31,12 @@ class Trainer:
         self.train_path = config.train_path
         self.test_path = config.test_path
         self.checkpoint_dir = config.checkpoint_dir
-        #tensorboard --logdir=./
 
+        if config.model_arch == "mobilenetv2":
+            self.model = MobileNetv2((None, self.img_size, self.img_size, 3), is4Train = True, mobilenetVersion=1)
 
-        self.model = MobileNetv2((None, self.img_size, self.img_size, 3), is4Train = True, mobilenetVersion=1)
-        #self.model = LeNet((None, self.img_size, self.img_size, 3))
+        if config.model_arch == "lenet5":
+            self.model = LeNet((None, self.img_size, self.img_size, 3))
 
         self.x = self.model.getInput()
 
@@ -67,14 +67,12 @@ class Trainer:
         self.step_rate = 1000
         self.decay = 0.95
         self.time = time
+
         self.global_step = tf.Variable(0, trainable=False)
-        #increment_global_step = tf.assign(global_step, global_step + 1)
+
         self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=True)
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=0.01).minimize(self.cost, self.global_step)
-
-        #optimizer = utils.build_optimizer(learning_rate=1e-4, optimizer_name='adam').minimize(cost)
-        #optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
 
         self.correct_prediction = tf.equal(self.y_pred_cls, self.y_true_cls)
 
@@ -122,18 +120,9 @@ class Trainer:
             # Get a batch of training examples.
             # x_batch now holds a batch of images and
             # y_true_batch are the true labels for those images.
+
             x_batch, y_true_batch, _, cls_batch = self.data.train.next_batch(self.train_batch_size)
             x_valid_batch, y_valid_batch, _, valid_cls_batch = self.data.valid.next_batch(self.train_batch_size)
-
-            # Convert shape from [num examples, rows, columns, depth]
-            # to [num examples, flattened image shape]
-
-            #x_batch = x_batch.reshape(train_batch_size, img_size_flat)
-
-            #x_valid_batch = x_valid_batch.reshape(train_batch_size, img_size_flat)
-
-            # Put the batch into a dict with the proper names
-            # for placeholder variables in the TensorFlow graph.
 
             feed_dict_train = {self.x: x_batch,
                                self.y_true: y_true_batch}
@@ -151,11 +140,6 @@ class Trainer:
             self.train_loss += self.session.run(self.cost, feed_dict=feed_dict_train)
             self.val_loss += self.session.run(self.cost, feed_dict=feed_dict_validate)
 
-
-            checkpoint_path = os.path.join(self.savePath, 'model')
-            self.saver.save(self.session, checkpoint_path, global_step=i)
-
-            # Print status at end of each epoch (defined as full pass through training dataset).
 
             self.epoch = int(i / required_itr4_1epoch)
 
@@ -181,19 +165,21 @@ class Trainer:
                     msg = "Epoch {0} --- Training Accuracy: {1}, Validation Accuracy: {2}, Train Loss: {3}, Validation Loss: {4}"
                     print(msg.format(self.epoch, self.train_acc, self.val_acc, self.train_loss, self.val_loss))
 
-                    #val_loss = self.session.run(self.cost, feed_dict=feed_dict_validate)
-                    #epoch = int(i / int(self.data.train.num_examples / self.batch_size))
-                    #self.print_progress(epoch, feed_dict_train, feed_dict_validate, val_loss)
+                    if not os.path.exists(config.checkpoint_dir):
+                        os.makedirs(config.checkpoint_dir)
 
-                    if self.early_stopping:
-                        if self.val_loss < best_val_loss:
-                            best_val_loss = self.val_loss
-                            patience = 0
-                        else:
-                            patience += 1
+                    self.saver.save(self.session, config.checkpoint_dir + config.model_arch , global_step=i)
 
-                        if patience == self.early_stopping:
-                            break
+                    #Early Stopping Mechanism
+                    # if self.early_stopping:
+                    #     if self.val_loss < best_val_loss:
+                    #         best_val_loss = self.val_loss
+                    #         patience = 0
+                    #     else:
+                    #         patience += 1
+                    #
+                    #     if patience == self.early_stopping:
+                    #         break
 
                     self.train_acc = 0
                     self.val_acc = 0
@@ -201,7 +187,6 @@ class Trainer:
                     self.val_loss = 0
 
 
-            # Update the total number of iterations performed.
         self.total_iterations += num_iterations
 
         # Ending time.
@@ -221,7 +206,10 @@ class Trainer:
             input_graph_def,
             ["output"]
         )
-        with tf.gfile.GFile("./models/mnv2.pb", "wb") as f:
+        if not os.path.exists(config.weight_dir):
+            os.makedirs(config.weight_dir)
+
+        with tf.gfile.GFile(config.weight_dir+ config.model_arch +".pb", "wb") as f:
             f.write(output_graph_def.SerializeToString())
 
         
