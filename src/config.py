@@ -2,13 +2,19 @@
 device = "cuda:0"
 
 train_path = 'data/cifar10png/train'
-test_path = 'data/catdog/test'
+test_path = 'data/cifar10png/test'
 checkpoint_dir = "models/"
+tensorboard_dir = './graphs/mobilenetv2'
 
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 total_class = len(classes)
+
+#Config For Mobilenetv2
 img_size = 224
 
+#Config For Lenet
+#img_size = 32
+numchannels = 3
 # batch size
 batch_size = 32
 # validation split
@@ -19,4 +25,3 @@ early_stopping = False
 
 #mobilenet v2 modelchannel
 modelchannel = [1,1,1,1,1,1]
-

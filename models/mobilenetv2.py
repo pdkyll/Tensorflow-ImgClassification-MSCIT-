@@ -69,7 +69,7 @@ class MobileNetv2:
                                     padding='valid', data_format='channels_last', name="avgpool")
         output = lProvider.convb(output, 1, 1, config.total_class, 1, "ptconv-1280-clsnum", relu=True)
         #self.output = outputlayer.fornetworks(output, config.total_class)
-        output = tf.squeeze(output,[1,2])
+        output = tf.squeeze(output,[1,2],"output")
 
         self.output = output
 

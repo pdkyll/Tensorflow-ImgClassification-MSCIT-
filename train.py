@@ -68,7 +68,7 @@ step_rate = 1000
 decay = 0.95
 
 global_step = tf.Variable(0, trainable=False)
-increment_global_step = tf.assign(global_step, global_step + 1)
+#increment_global_step = tf.assign(global_step, global_step + 1)
 learning_rate = tf.train.exponential_decay(lr, global_step, step_rate, decay, staircase=True)
 
 optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate, epsilon=0.01).minimize(cost, global_step)
@@ -99,7 +99,7 @@ def print_progress(epoch, feed_dict_train, feed_dict_validate, val_loss):
     val_acc = session.run(accuracy, feed_dict=feed_dict_validate)
     msg = "Epoch {0} --- Training Accuracy: {1:>6.1%}, Validation Accuracy: {2:>6.1%}, Validation Loss: {3:.3f}"
     print(msg.format(epoch + 1, acc, val_acc, val_loss))
-    print('Learning rate: %f' % (session.run(learning_rate)))
+    print('Learning rate: %f' % (session.run(learning_rate)), 'Global Step : %f' % (session.run(global_step)))
 
 def optimize(num_iterations):
     # Ensure we update the global variable rather than a local copy.

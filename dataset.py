@@ -126,6 +126,8 @@ class DataSet(object):
         end = self._index_in_epoch
 
         images = []
+        image_normalize_mean = [0.485, 0.456, 0.406]
+        image_normalize_std = [0.229, 0.224, 0.225]
 
         for i in range(start, end):
             image = cv2.imread(self._images_path[i])
@@ -134,11 +136,13 @@ class DataSet(object):
 
         images = np.array(images)
         images = images.astype(np.float32)
-        images = np.multiply(images, 1.0 / 255.0)
 
-        # image = cv2.imread(fl)
-        # image = cv2.resize(image, (image_size, image_size), cv2.INTER_LINEAR)
-        # images.append(image)
+        # Normalization and Standardization
+        images = np.multiply(images, 1.0 / 255.0)
+        for image in images:
+            for channel in range(3) :
+                image[:, :, channel] -= image_normalize_mean[channel]
+                image[:, :, channel] /= image_normalize_std[channel]
 
         return images, self._labels[start:end], self._ids[start:end], self._cls[start:end]
 
