@@ -81,7 +81,64 @@ https://drive.google.com/file/d/1etOCcu3eAZvEH_KY_rYFKighLdfT7CIt/view?usp=shari
 
 Explanation About the Code:
 
+How to load the batches of data to train the network?
 
+Please Read dataset.py :
+1. For reading images and labels 
+2. Images path will be the fullpath of the images
+3. Images will undergo Normalization and Standardization when loading the batches into the model
+
+      a. Normalization: 1/255 --> Data will change From 0-255 to 0-1
+      
+      ![alt text](https://miro.medium.com/max/273/1*QWFEYIKWrBSiEqhdrGZGcA.png)
+      
+      b. Standardization: 
+      
+      ![alt text](https://miro.medium.com/max/186/1*2Nx37E6IvuITArzIs5EcCg.png)
+   
+              image_normalize_mean = [0.485, 0.456, 0.406]
+              image_normalize_std = [0.229, 0.224, 0.225]
+
+              for i in range(start, end):
+                  image = cv2.imread(self._images_path[i])
+                  image = cv2.resize(image, (self._image_size, self._image_size), cv2.INTER_LINEAR)
+                  images.append(image)
+
+              images = np.array(images)
+              images = images.astype(np.float32)
+
+              # Normalization and Standardization
+              images = np.multiply(images, 1.0 / 255.0)
+              for image in images:
+                  for channel in range(3) :
+                      image[:, :, channel] -= image_normalize_mean[channel]
+                      image[:, :, channel] /= image_normalize_std[channel]
+                      
+Explanation in details: https://towardsdatascience.com/normalization-vs-standardization-cb8fe15082eb
+   
+4. labels will be in the form of [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0] , where 1 represent the groundtruth of the image class and the length is 10 since there are 10 classes
+
+Please read the trainer.py file
+
+5. In tensorflow , we use something called session to run the input and ground truth label. To train our model we must feed in the data and let our optimizer to do back propagation and update model weighting
+
+            x_batch, y_true_batch, _, cls_batch = self.data.train.next_batch(self.train_batch_size)
+            x_valid_batch, y_valid_batch, _, valid_cls_batch = self.data.valid.next_batch(self.train_batch_size)
+
+            feed_dict_train = {self.x: x_batch,
+                               self.y_true: y_true_batch}
+
+            feed_dict_validate = {self.x: x_valid_batch,
+                                  self.y_true: y_valid_batch}
+
+            self.session.run(self.optimizer, feed_dict=feed_dict_train)
+            
+ How to define our loss and optimizer?
+ 
+ Please read the trainer.py file
+ 
+ 1. In image classification , we usually use something called cross entrophy
+  
 
 Brief Introduction About CNN: 
 
