@@ -16,7 +16,7 @@ Environment's Requirement:
 - opencv-python == 4.1.1.26 (pip*)
 - sklearn == 0.0 (pip*)
 
-* is just my choice in installing those packages
+( * is just my choice in installing those packages )
 
 Folder Dir Arch:
 
