@@ -3,7 +3,7 @@ Dataset:
 
 CIFAR-10 Dataset
 Download Link: 
-https://drive.google.com/file/d/1XpBBM95ZhlF_QuDc54rLQalbQ1aDfv-m/view?usp=sharing
+https://drive.google.com/file/d/1d666e1DLtlAKk9D_P-aVkRB9P-jSV9AT/view?usp=
 
 Unzip the file and create a dir name "data" , put "cifar10png" inside
 
@@ -38,9 +38,9 @@ How to Run:
 
 1. execute run.py 
 
-    T = Trainer()
-    T.optimize(num_epoch=1)
-    T.export()
+          T = Trainer()
+          T.optimize(num_epoch=1)
+          T.export()
 
 Option: Select number of epoch for training
 
@@ -64,6 +64,9 @@ ii. change validation size
       validation_size = .16
 
 Option: The default bs is 32 and train : valid spilt is 84 : 16 
+
+3. Execute run_test.py after you obtain the lenet5.pb model in weights to get test set accuracy 
+
 
 How to Read Results:
 After a successful run, tensorboard should write a result graph in the dir ./graph/{network name
