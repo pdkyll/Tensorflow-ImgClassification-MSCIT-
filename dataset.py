@@ -147,27 +147,30 @@ class DataSet(object):
         return images, self._labels[start:end], self._ids[start:end], self._cls[start:end]
 
 
-def read_train_sets(train_path, image_size, classes, validation_size=0):
+def read_train_sets(train_path, val_path, image_size, classes):
     class DataSets(object):
         pass
 
     data_sets = DataSets()
 
     images_path, labels, ids, cls = load_train(train_path, image_size, classes)
-    images_path, labels, ids, cls = shuffle(images_path, labels, ids, cls)  # shuffle the data
+    val_images_path, val_labels, val_ids, val_cls = load_train(val_path, image_size, classes)
 
-    if isinstance(validation_size, float):
-        validation_size = int(validation_size * len(images_path))
+    images_path, labels, ids, cls = shuffle(images_path, labels, ids, cls)  # shuffle the training data
+    val_images_path, val_labels, val_ids, val_cls = shuffle(val_images_path, val_labels, val_ids, val_cls)
 
-    validation_images_path = images_path[:validation_size]
-    validation_labels = labels[:validation_size]
-    validation_ids = ids[:validation_size]
-    validation_cls = cls[:validation_size]
+    # if isinstance(validation_size, float):
+    #     validation_size = int(validation_size * len(images_path))
 
-    train_images_path = images_path[validation_size:]
-    train_labels = labels[validation_size:]
-    train_ids = ids[validation_size:]
-    train_cls = cls[validation_size:]
+    validation_images_path = val_images_path
+    validation_labels = val_labels
+    validation_ids = val_ids
+    validation_cls = val_cls
+
+    train_images_path = images_path
+    train_labels = labels
+    train_ids = ids
+    train_cls = cls
 
     data_sets.train = DataSet(train_images_path, image_size, train_labels, train_ids, train_cls)
     data_sets.valid = DataSet(validation_images_path, image_size, validation_labels, validation_ids, validation_cls)
@@ -175,6 +178,12 @@ def read_train_sets(train_path, image_size, classes, validation_size=0):
     return data_sets
 
 
-def read_test_set(test_path, image_size):
-    images, ids = load_test(test_path, image_size)
-    return images, ids
+def read_test_set(test_path, image_size,classes):
+    class DataSets(object):
+        pass
+    data_sets = DataSets()
+    images_path, labels, ids, cls = load_train(test_path, image_size, classes)
+    images_path, labels, ids, cls = shuffle(images_path, labels, ids, cls)
+    data_sets.test = DataSet(images_path, image_size, labels, ids, cls)
+
+    return data_sets

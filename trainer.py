@@ -11,6 +11,7 @@ import time
 exp_dir = os.path.join("Result/")
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 ## Configuration and Hyperparameters
+
 class Trainer:
     def __init__(self,num_channels = config.numchannels):
         # image dimensions (only squares for now)
@@ -29,7 +30,9 @@ class Trainer:
         self.early_stopping = config.early_stopping
 
         self.train_path = config.train_path
+        self.val_path = config.val_path
         self.test_path = config.test_path
+
         self.checkpoint_dir = config.checkpoint_dir
 
         if config.model_arch == "mobilenetv2":
@@ -63,16 +66,17 @@ class Trainer:
 
         self.epoch = 0
 
-        self.lr = 0.01
+        self.lr = 0.001
         self.step_rate = 1000
         self.decay = 0.95
         self.time = time
 
         self.global_step = tf.Variable(0, trainable=False)
 
-        self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=True)
+        self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=False)
 
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=0.01).minimize(self.cost, self.global_step)
+        #self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=0.01).minimize(self.cost, self.global_step)
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost,self.global_step)
 
         self.correct_prediction = tf.equal(self.y_pred_cls, self.y_true_cls)
 
@@ -92,8 +96,8 @@ class Trainer:
 
         self.total_iterations = 0
 
-        ## Load Data
-        self.data = dataset.read_train_sets(self.train_path, self.img_size, config.classes, validation_size=self.validation_size)
+        ## Load Data for Training and Validation
+        self.data = dataset.read_train_sets(self.train_path, self.val_path, self.img_size, config.classes, validation_size=self.validation_size)
         #  test_images, test_ids = dataset.read_test_set(test_path, img_size)
 
     def print_progress(self,epoch, feed_dict_train, feed_dict_validate, val_loss):
@@ -197,6 +201,7 @@ class Trainer:
 
         # Print the time-usage.
         print("Time elapsed: " + str(timedelta(seconds=int(round(time_dif)))))
+
 
     def export(self):
         input_graph_def = tf.get_default_graph().as_graph_def()

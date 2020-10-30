@@ -5,5 +5,5 @@ import os
 #os.makedirs("Result", exist_ok=True)
 
 T = Trainer()
-T.optimize(num_epoch=1)
+T.optimize(num_epoch=30)
 T.export()

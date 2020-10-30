@@ -1,6 +1,7 @@
 device = "cuda:0"
 
 train_path = 'data/cifar10png/train'
+val_path = 'data/cifar10png/val'
 test_path = 'data/cifar10png/test'
 
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
