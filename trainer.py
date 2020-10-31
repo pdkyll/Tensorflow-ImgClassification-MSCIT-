@@ -97,7 +97,7 @@ class Trainer:
         self.total_iterations = 0
 
         ## Load Data for Training and Validation
-        self.data = dataset.read_train_sets(self.train_path, self.val_path, self.img_size, config.classes, validation_size=self.validation_size)
+        self.data = dataset.read_train_sets(self.train_path, self.val_path, self.img_size, config.classes)
         #  test_images, test_ids = dataset.read_test_set(test_path, img_size)
 
     def print_progress(self,epoch, feed_dict_train, feed_dict_validate, val_loss):
