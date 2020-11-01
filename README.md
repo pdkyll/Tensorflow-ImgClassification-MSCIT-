@@ -3,7 +3,7 @@ Dataset:
 
 CIFAR-10 Dataset
 Download Link: 
-https://drive.google.com/file/d/1d666e1DLtlAKk9D_P-aVkRB9P-jSV9AT/view?usp=
+https://drive.google.com/file/d/1XpBBM95ZhlF_QuDc54rLQalbQ1aDfv-m/view?usp=sharing
 
 Unzip the file and create a dir name "data" , put "cifar10png" inside
 
