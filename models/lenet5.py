@@ -25,6 +25,8 @@ class LeNet:
         conv1_b = tf.Variable(tf.zeros(6))
 
         conv1 = tf.nn.conv2d(self.inputImage, conv1_w, strides=[1, 1, 1, 1], padding='VALID') + conv1_b
+        conv1 = tf.nn.relu(conv1)
+
         # TODO: Activation.
         # TODO: Pooling. Input = 28x28x6. Output = 14x14x6.
         pool_1 = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='VALID')

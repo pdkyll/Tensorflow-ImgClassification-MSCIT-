@@ -1,5 +1,6 @@
 import time
 import tensorflow as tf
+import numpy as np
 import dataset
 from datetime import timedelta
 import src.config as config
@@ -8,10 +9,11 @@ from models.lenet5 import LeNet
 import os
 import sys
 import time
+import cv2
 exp_dir = os.path.join("Result/")
 os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
-class Tester:
+class SingleImgTester:
     def __init__(self, model_path):
 
         self.model_path = model_path
@@ -55,24 +57,31 @@ class Tester:
 
         self.total_iterations = 0
 
-        self.data = dataset.read_test_set(self.test_path, self.img_size, config.classes)
 
+    def test(self, image_path="./cat.jpg"):
+            images = []
+            image_normalize_mean = [0.485, 0.456, 0.406]
+            image_normalize_std = [0.229, 0.224, 0.225]
 
-    def test(self):
-        num_epoch = 1
-        required_itr4_1epoch = int(self.data.test.num_examples / self.batch_size)
-        num_iterations = required_itr4_1epoch * num_epoch + 1
+            orig_image = cv2.imread(image_path)
+            image = orig_image
+            orig_image = cv2.resize(image, (640, 480))
+            image = cv2.resize(image, (config.img_size, config.img_size))
+            #cv2.imshow(image)
+            images.append(image)
+            images = np.array(images)
+            images = images.astype(np.float32)
 
-        for i in range(self.total_iterations, self.total_iterations + num_iterations):
-            x_batch, y_true_batch, _, cls_batch = self.data.test.next_batch(self.batch_size)
-            feed_dict_test = { self.x: x_batch,
-                               self.y_true: y_true_batch }
-            self.test_acc += self.session.run(self.accuracy, feed_dict=feed_dict_test)
-            if i % 100 == 0:
-                msg = "{0} % of the dataset is tested"
-                completeness = (i/num_iterations)*100
-                print(msg.format(completeness))
+            images = np.multiply(images, 1.0 / 255.0)
+            for image in images:
+                for channel in range(3):
+                    image[:, :, channel] -= image_normalize_mean[channel]
+                    image[:, :, channel] /= image_normalize_std[channel]
 
-        self.test_acc /= required_itr4_1epoch
+            feed_dict_test = { self.x: images,}
+            prediction = self.session.run(self.y_pred_cls, feed_dict=feed_dict_test)
+            print("Prediction: ", config.classes[prediction[0]])
 
-        print("The Final Accuracy is : " , self.test_acc)
+if __name__ == '__main__':
+    T = SingleImgTester(model_path="weights/lenet5/lenet5.pb")
+    T.test(image_path="./dog.jpg")
