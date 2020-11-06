@@ -5,5 +5,7 @@ import os
 #os.makedirs("Result", exist_ok=True)
 
 T = Trainer()
-T.optimize(num_epoch=30)
+# if not isinstance(config.pretrained_checkpoint_dir, type(None)):
+#     T.restore(config.pretrained_checkpoint_dir)
+T.optimize(num_epoch=1)
 T.export()

@@ -36,10 +36,11 @@ class Trainer:
         self.checkpoint_dir = config.checkpoint_dir
 
         if config.model_arch == "mobilenetv2":
-            self.model = MobileNetv2((None, self.img_size, self.img_size, 3), is4Train = True, mobilenetVersion=1)
+            self.model = MobileNetv2((None, self.img_size, self.img_size, 3), is4Train = config.is4train, mobilenetVersion=1)
 
         if config.model_arch == "lenet5":
             self.model = LeNet((None, self.img_size, self.img_size, 3))
+
 
         self.x = self.model.getInput()
 
@@ -84,10 +85,17 @@ class Trainer:
 
 
         self.session = tf.Session()
+        # self.saver = tf.train.Saver(max_to_keep=10)
+        # self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
+        if config.is4train == True:
+            self.saver = tf.train.Saver(max_to_keep=10)
+            self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
+            self.session.run(tf.global_variables_initializer())
+        else:
+            self.saver = tf.train.import_meta_graph(config.pretrained_checkpoint_dir + '.meta')
+            self.saver.restore(self.session, config.pretrained_checkpoint_dir)
+            #self.session.run(tf.global_variables_initializer())
 
-        self.session.run(tf.global_variables_initializer())
-        self.saver = tf.train.Saver(max_to_keep=10)
-        self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
 
         #self.writer = tf.summary.FileWriter('./graphs/lenet5')
         self.writer = tf.summary.FileWriter(config.tensorboard_dir, graph_def=self.session.graph_def)
@@ -108,12 +116,20 @@ class Trainer:
         print(msg.format(epoch + 1, acc, val_acc, val_loss))
         print('Learning rate: %f' % (self.session.run(self.learning_rate)), 'Global Step : %f' % (self.session.run(self.global_step)))
 
+    def restore(self, checkpointPath):
+        saver = tf.train.import_meta_graph(checkpointPath + '.meta')
+        saver.restore(self.session, checkpointPath)
+        #tf.train.Saver().restore(self.session, checkpointPath)
 
     def optimize(self,num_epoch):
         required_itr4_1epoch = int(self.data.train.num_examples / self.batch_size)
 
         # Start-time used for printing time-usage below.
         num_iterations = required_itr4_1epoch * num_epoch + 1
+
+        if config.is4oneitr == True:
+            num_iterations = 1
+
         start_time = time.time()
 
         best_val_loss = float("inf")
@@ -172,7 +188,8 @@ class Trainer:
                     if not os.path.exists(config.checkpoint_dir):
                         os.makedirs(config.checkpoint_dir)
 
-                    self.saver.save(self.session, config.checkpoint_dir + config.model_arch , global_step=i)
+                    if config.is4train == True:
+                        self.saver.save(self.session, config.checkpoint_dir + config.model_arch , global_step=i)
 
                     #Early Stopping Mechanism
                     # if self.early_stopping:

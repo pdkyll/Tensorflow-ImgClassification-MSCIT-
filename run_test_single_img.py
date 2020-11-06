@@ -36,7 +36,7 @@ class SingleImgTester:
             self.session.graph.as_default()
             tf.import_graph_def(graph_def, name='')
 
-        self.session.run(tf.global_variables_initializer())
+        #self.session.run(tf.global_variables_initializer())
         self.x = self.session.graph.get_tensor_by_name('Image:0')
         self.y = self.session.graph.get_tensor_by_name('output:0')
         #self.x_image = tf.reshape(self.x, [-1, self.img_size, self.img_size, num_channels])
@@ -58,7 +58,7 @@ class SingleImgTester:
         self.total_iterations = 0
 
 
-    def test(self, image_path="./cat.jpg"):
+    def test_by_img(self, image_path="./cat.jpg"):
             images = []
             image_normalize_mean = [0.485, 0.456, 0.406]
             image_normalize_std = [0.229, 0.224, 0.225]
@@ -82,6 +82,41 @@ class SingleImgTester:
             prediction = self.session.run(self.y_pred_cls, feed_dict=feed_dict_test)
             print("Prediction: ", config.classes[prediction[0]])
 
+    def test_by_webcam(self):
+        images = []
+        image_normalize_mean = [0.485, 0.456, 0.406]
+        image_normalize_std = [0.229, 0.224, 0.225]
+        cap = cv2.VideoCapture(0)
+        if not cap.isOpened():
+            print("Cannot open camera")
+            exit()
+
+        while (True):
+            ret, orig_image = cap.read()
+            image = orig_image
+            image = cv2.resize(image, (config.img_size, config.img_size))
+            # cv2.imshow(image)
+            images.append(image)
+            images = np.array(images)
+            images = images.astype(np.float32)
+
+            images = np.multiply(images, 1.0 / 255.0)
+            for image in images:
+                for channel in range(3):
+                    image[:, :, channel] -= image_normalize_mean[channel]
+                    image[:, :, channel] /= image_normalize_std[channel]
+
+            feed_dict_test = {self.x: images, }
+            prediction = self.session.run(self.y_pred_cls, feed_dict=feed_dict_test)
+            cv2.imshow("Prediction", orig_image)
+            print("Prediction: ", config.classes[prediction[0]])
+            cv2.waitKey(10)
+            if cv2.waitKey(1) == ord('q'):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+
 if __name__ == '__main__':
-    T = SingleImgTester(model_path="weights/lenet5/lenet5.pb")
-    T.test(image_path="./dog.jpg")
+    T = SingleImgTester(model_path="weights/mobilenetv2/2020/11/06/16:27:35/mobilenetv2.pb")
+    T.test_by_img(image_path="./data/cifar10png/test/cat/0031.png")

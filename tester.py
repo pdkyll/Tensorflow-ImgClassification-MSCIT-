@@ -34,7 +34,7 @@ class Tester:
             self.session.graph.as_default()
             tf.import_graph_def(graph_def, name='')
 
-        self.session.run(tf.global_variables_initializer())
+        #self.session.run(tf.global_variables_initializer())
         self.x = self.session.graph.get_tensor_by_name('Image:0')
         self.y = self.session.graph.get_tensor_by_name('output:0')
         #self.x_image = tf.reshape(self.x, [-1, self.img_size, self.img_size, num_channels])
