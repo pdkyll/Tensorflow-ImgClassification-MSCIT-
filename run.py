@@ -7,5 +7,6 @@ import os
 T = Trainer()
 # if not isinstance(config.pretrained_checkpoint_dir, type(None)):
 #     T.restore(config.pretrained_checkpoint_dir)
-T.optimize(num_epoch=1)
-T.export()
+T.optimize(num_epoch=5)
+T.prune(num_epoch=5)
+#T.export()

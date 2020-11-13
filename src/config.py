@@ -11,21 +11,21 @@ test_path = 'data/cifar10png/test'
 classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
 total_class = len(classes)
 
-model_arch = "mobilenetv2"
+model_arch = "mobilenetv2_tf"
 
-if model_arch == "mobilenetv2":
+if model_arch == "mobilenetv2" or "mobilenetv2_tf":
     img_size = 224
 
 if model_arch == "lenet5":
     img_size = 32
 
-is4train = False
-is4oneitr = True
-pretrained_checkpoint_dir = "./checkpoints/mobilenetv2/2020/11/06/16:27:35/mobilenetv2-1093"
+#is4train = False
+#is4oneitr = True
+#pretrained_checkpoint_dir = "./checkpoints/mobilenetv2/2020/11/06/16:27:35/mobilenetv2-1093"
 
-# is4train = True
-# is4oneitr = False
-# pretrained_checkpoint_dir = None
+is4train = True
+is4oneitr = False
+pretrained_checkpoint_dir = None
 
 
 checkpoint_dir = "./checkpoints/" + model_arch + "/" + date_time + "/"

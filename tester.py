@@ -47,7 +47,13 @@ class Tester:
 
         self.y_pred_cls = tf.argmax(self.y_pred, axis=1)
 
+        self.cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(logits=self.y, labels=self.y_true)
+
+        self.cost = tf.reduce_mean(self.cross_entropy)
+
         self.test_acc = 0
+
+        self.test_loss = 0
 
         self.correct_prediction = tf.equal(self.y_pred_cls, self.y_true_cls)
 
@@ -62,17 +68,26 @@ class Tester:
         num_epoch = 1
         required_itr4_1epoch = int(self.data.test.num_examples / self.batch_size)
         num_iterations = required_itr4_1epoch * num_epoch + 1
-
+        start_time = time.time()
         for i in range(self.total_iterations, self.total_iterations + num_iterations):
             x_batch, y_true_batch, _, cls_batch = self.data.test.next_batch(self.batch_size)
             feed_dict_test = { self.x: x_batch,
                                self.y_true: y_true_batch }
             self.test_acc += self.session.run(self.accuracy, feed_dict=feed_dict_test)
+            self.test_loss += self.session.run(self.cost, feed_dict=feed_dict_test)
             if i % 100 == 0:
                 msg = "{0} % of the dataset is tested"
                 completeness = (i/num_iterations)*100
                 print(msg.format(completeness))
-
+        end_time = time.time()
+        time_dif = end_time - start_time
         self.test_acc /= required_itr4_1epoch
-
+        self.test_loss /= required_itr4_1epoch
         print("The Final Accuracy is : " , self.test_acc)
+        print("The Final Loss is : ", self.test_loss)
+        print("The Time Required is : ", time_dif)
+
+    def estimate_flops(self):
+        with self.session.graph.as_default():
+            flops = tf.profiler.profile(self.session.graph, options= tf.profiler.ProfileOptionBuilder.float_operation())
+            print("The Model's flop is {}".format(flops.total_float_ops))

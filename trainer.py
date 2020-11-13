@@ -1,8 +1,11 @@
 import time
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
+from tensorflow.contrib.model_pruning.python import pruning
 import dataset
 from datetime import timedelta
 import src.config as config
+from models.mobilenet_v2 import MobileNetv2_tf
 from models.mobilenetv2 import MobileNetv2
 from models.lenet5 import LeNet
 import os
@@ -37,6 +40,9 @@ class Trainer:
 
         if config.model_arch == "mobilenetv2":
             self.model = MobileNetv2((None, self.img_size, self.img_size, 3), is4Train = config.is4train, mobilenetVersion=1)
+
+        if config.model_arch == "mobilenetv2_tf":
+            self.model = MobileNetv2_tf((None, self.img_size, self.img_size, 3), is4Train = config.is4train)
 
         if config.model_arch == "lenet5":
             self.model = LeNet((None, self.img_size, self.img_size, 3))
@@ -83,23 +89,42 @@ class Trainer:
 
         self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
 
+        # Get, Print, and Edit Pruning Hyperparameters
+        pruning_hparams = pruning.get_pruning_hparams()
+        print("Pruning Hyperparameters:", pruning_hparams)
+
+        # Change hyperparameters to meet our needs
+        pruning_hparams.begin_pruning_step = 100
+        #pruning_hparams.end_pruning_step = 250
+        pruning_hparams.sparsity_function_end_step = 10000
+        pruning_hparams.pruning_frequency = 100
+        pruning_hparams.initial_sparsity= .3
+        pruning_hparams.target_sparsity = .9
+
+        # Create a pruning object using the pruning specification, sparsity seems to have priority over the hparam
+        p = pruning.Pruning(pruning_hparams, global_step=self.global_step)
+        self.prune_op = p.conditional_mask_update_op()
 
         self.session = tf.Session()
         # self.saver = tf.train.Saver(max_to_keep=10)
         # self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
+        self.session.run(tf.global_variables_initializer())
         if config.is4train == True:
             self.saver = tf.train.Saver(max_to_keep=10)
-            self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
-            self.session.run(tf.global_variables_initializer())
+            self.savePath = os.path.join(exp_dir, config.model_arch + "checkpoints")
         else:
             self.saver = tf.train.import_meta_graph(config.pretrained_checkpoint_dir + '.meta')
             self.saver.restore(self.session, config.pretrained_checkpoint_dir)
             #self.session.run(tf.global_variables_initializer())
 
+        for variable in slim.get_variables():
+            tf.summary.histogram(variable.op.name, variable)
+
+        self.summaries = tf.summary.merge_all()
 
         #self.writer = tf.summary.FileWriter('./graphs/lenet5')
-        self.writer = tf.summary.FileWriter(config.tensorboard_dir, graph_def=self.session.graph_def)
-
+        self.train_writer = tf.summary.FileWriter(config.tensorboard_dir + "/plot_train", graph_def=self.session.graph_def)
+        self.val_writer = tf.summary.FileWriter(config.tensorboard_dir + "/plot_val", graph_def=self.session.graph_def)
         self.train_batch_size = self.batch_size
 
         self.total_iterations = 0
@@ -132,6 +157,9 @@ class Trainer:
 
         start_time = time.time()
 
+        best_val_acc = 0
+        pre_val_acc = 0
+        current_val_acc = 0
         best_val_loss = float("inf")
         patience = 0
         print("Start Training ...")
@@ -160,6 +188,7 @@ class Trainer:
             self.train_loss += self.session.run(self.cost, feed_dict=feed_dict_train)
             self.val_loss += self.session.run(self.cost, feed_dict=feed_dict_validate)
 
+            # summ = self.session.run(self.summaries,feed_dict=feed_dict_validate)
 
             self.epoch = int(i / required_itr4_1epoch)
 
@@ -173,14 +202,22 @@ class Trainer:
                     self.train_loss /= required_itr4_1epoch
                     self.val_loss /= required_itr4_1epoch
 
-                    summary = tf.Summary()
-                    summary.value.add(tag='train_acc', simple_value=self.train_acc)
-                    summary.value.add(tag='val_acc', simple_value=self.val_acc)
-                    summary.value.add(tag='train_loss', simple_value=self.train_loss)
-                    summary.value.add(tag='val_loss', simple_value=self.val_loss)
-                    summary.value.add(tag='learning_rate', simple_value=self.session.run(self.learning_rate))
+                    train_summary = tf.Summary()
+                    val_summary = tf.Summary()
 
-                    self.writer.add_summary(summary, self.epoch)
+                    train_summary.value.add(tag='acc', simple_value=self.train_acc)
+                    val_summary.value.add(tag='acc', simple_value=self.val_acc)
+
+                    train_summary.value.add(tag='loss', simple_value=self.train_loss)
+                    val_summary.value.add(tag='loss', simple_value=self.val_loss)
+
+                    train_summary.value.add(tag='learning_rate', simple_value=self.session.run(self.learning_rate))
+
+                    self.train_writer.add_summary(self.session.run(self.summaries), self.epoch)
+
+                    self.train_writer.add_summary(train_summary, self.epoch)
+                    self.val_writer.add_summary(val_summary, self.epoch)
+
 
                     msg = "Epoch {0} --- Training Accuracy: {1}, Validation Accuracy: {2}, Train Loss: {3}, Validation Loss: {4}"
                     print(msg.format(self.epoch, self.train_acc, self.val_acc, self.train_loss, self.val_loss))
@@ -191,16 +228,13 @@ class Trainer:
                     if config.is4train == True:
                         self.saver.save(self.session, config.checkpoint_dir + config.model_arch , global_step=i)
 
-                    #Early Stopping Mechanism
-                    # if self.early_stopping:
-                    #     if self.val_loss < best_val_loss:
-                    #         best_val_loss = self.val_loss
-                    #         patience = 0
-                    #     else:
-                    #         patience += 1
-                    #
-                    #     if patience == self.early_stopping:
-                    #         break
+                    current_val_acc = self.val_acc
+
+                    if best_val_acc < current_val_acc and current_val_acc > 0.5:
+                        best_val_acc = current_val_acc
+                        self.export(name= "acc="+str(current_val_acc))
+
+                    print("Sparsity of layers (should be 0)", self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
 
                     self.train_acc = 0
                     self.val_acc = 0
@@ -219,8 +253,107 @@ class Trainer:
         # Print the time-usage.
         print("Time elapsed: " + str(timedelta(seconds=int(round(time_dif)))))
 
+    def prune(self,num_epoch):
 
-    def export(self):
+        self.total_iterations = 0
+
+        self.session.run(tf.assign(self.global_step, 0))
+
+        required_itr4_1epoch = int(self.data.train.num_examples / self.batch_size)
+
+        # Start-time used for printing time-usage below.
+        num_iterations = required_itr4_1epoch * num_epoch + 1
+
+        if config.is4oneitr == True:
+            num_iterations = 1
+
+        start_time = time.time()
+
+        best_val_acc = 0
+
+        print("Start Pruning ...")
+        for i in range(self.total_iterations,self.total_iterations + num_iterations):
+            self.session.run(self.prune_op)
+            x_batch, y_true_batch, _, cls_batch = self.data.train.next_batch(self.train_batch_size)
+            x_valid_batch, y_valid_batch, _, valid_cls_batch = self.data.valid.next_batch(self.train_batch_size)
+
+            feed_dict_train = {self.x: x_batch,
+                               self.y_true: y_true_batch}
+
+            feed_dict_validate = {self.x: x_valid_batch,
+                                  self.y_true: y_valid_batch}
+
+            self.session.run(self.optimizer, feed_dict=feed_dict_train)
+            self.train_acc += self.session.run(self.accuracy, feed_dict=feed_dict_train)
+            self.val_acc += self.session.run(self.accuracy, feed_dict=feed_dict_validate)
+            self.train_loss += self.session.run(self.cost, feed_dict=feed_dict_train)
+            self.val_loss += self.session.run(self.cost, feed_dict=feed_dict_validate)
+
+
+            self.epoch = int(i / required_itr4_1epoch)
+
+            sys.stdout.write("\r" + "Epoch : " + str(i / required_itr4_1epoch) + " ")
+            sys.stdout.flush()
+
+            if(self.epoch != 0) :
+                if (i % required_itr4_1epoch == 0) :
+                    self.train_acc /= required_itr4_1epoch
+                    self.val_acc /= required_itr4_1epoch
+                    self.train_loss /= required_itr4_1epoch
+                    self.val_loss /= required_itr4_1epoch
+
+                    # train_summary = tf.Summary()
+                    # val_summary = tf.Summary()
+                    #
+                    # train_summary.value.add(tag='acc', simple_value=self.train_acc)
+                    # val_summary.value.add(tag='acc', simple_value=self.val_acc)
+                    #
+                    # train_summary.value.add(tag='loss', simple_value=self.train_loss)
+                    # val_summary.value.add(tag='loss', simple_value=self.val_loss)
+                    #
+                    # train_summary.value.add(tag='learning_rate', simple_value=self.session.run(self.learning_rate))
+                    #
+                    # self.train_writer.add_summary(self.session.run(self.summaries), self.epoch)
+                    #
+                    # self.train_writer.add_summary(train_summary, self.epoch)
+                    # self.val_writer.add_summary(val_summary, self.epoch)
+
+
+                    msg = "Epoch {0} --- Training Accuracy: {1}, Validation Accuracy: {2}, Train Loss: {3}, Validation Loss: {4}"
+                    print(msg.format(self.epoch, self.train_acc, self.val_acc, self.train_loss, self.val_loss))
+
+                    # if not os.path.exists(config.checkpoint_dir):
+                    #     os.makedirs(config.checkpoint_dir)
+                    #
+                    # if config.is4train == True:
+                    #     self.saver.save(self.session, config.checkpoint_dir + config.model_arch , global_step=i)
+
+                    current_val_acc = self.val_acc
+
+                    if best_val_acc < current_val_acc and current_val_acc > 0.5:
+                        best_val_acc = current_val_acc
+                        self.export(name= "_pruned_acc="+str(current_val_acc))
+
+                    self.train_acc = 0
+                    self.val_acc = 0
+                    self.train_loss = 0
+                    self.val_loss = 0
+
+
+        self.total_iterations += num_iterations
+
+        print("Sparsity of layers (should be 0)", self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
+
+        # Ending time.
+        end_time = time.time()
+
+        # Difference between start and end-times.
+        time_dif = end_time - start_time
+
+        # Print the time-usage.
+        print("Time elapsed: " + str(timedelta(seconds=int(round(time_dif)))))
+
+    def export(self, name):
         input_graph_def = tf.get_default_graph().as_graph_def()
 
         output_graph_def = tf.graph_util.convert_variables_to_constants(
@@ -231,7 +364,7 @@ class Trainer:
         if not os.path.exists(config.weight_dir):
             os.makedirs(config.weight_dir)
 
-        with tf.gfile.GFile(config.weight_dir+ config.model_arch +".pb", "wb") as f:
+        with tf.gfile.GFile(config.weight_dir+ config.model_arch + str(name) +".pb", "wb") as f:
             f.write(output_graph_def.SerializeToString())
 
         
