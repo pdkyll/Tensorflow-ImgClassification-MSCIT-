@@ -46,7 +46,7 @@ class Trainer:
 
         self.y_true_cls = tf.argmax(self.y_true, axis=1)
 
-        self.y_pred = tf.nn.softmax(self.model.getOutput())
+        self.y_pred = self.model.getOutput()
 
         self.y_pred_cls = tf.argmax(self.y_pred, axis=1)
 
