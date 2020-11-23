@@ -25,8 +25,8 @@ def conv2d(input_, output_dim, k_h, k_w, d_h, d_w, stddev=0.02, name='conv2d', b
               regularizer=tf.contrib.layers.l2_regularizer(weight_decay),
               initializer=tf.truncated_normal_initializer(stddev=stddev))
         #conv = tf.nn.conv2d(input_, w, strides=[1, d_h, d_w, 1], padding='SAME')
-        conv = tf.nn.conv2d(input_, pruning.apply_mask(w, scope) , strides=[1, d_h, d_w, 1], padding='SAME')
-        #conv = layers.masked_conv2d(input_, kernel_size=[k_w, k_h], num_outputs=output_dim ,stride=[d_w, d_h], padding='SAME', weights_initializer=tf.truncated_normal_initializer(stddev=stddev), weights_regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
+        #conv = tf.nn.conv2d(input_, pruning.apply_mask(w, scope) , strides=[1, d_h, d_w, 1], padding='SAME')
+        conv = layers.masked_conv2d(input_, kernel_size=[k_w, k_h], num_outputs=output_dim ,stride=[d_w, d_h], padding='SAME', weights_initializer=tf.truncated_normal_initializer(stddev=stddev), weights_regularizer=tf.contrib.layers.l2_regularizer(weight_decay))
 
         if bias:
             biases = tf.get_variable('bias', [output_dim], initializer=tf.constant_initializer(0.0))

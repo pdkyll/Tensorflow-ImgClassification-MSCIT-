@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import re
 import numpy as np
-from rigl import sparse_utils
+from sparse import sparse_utils
 import six
 
 from tensorflow.contrib.model_pruning.python import pruning

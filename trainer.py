@@ -8,6 +8,7 @@ import src.config as config
 from models.mobilenet_v2 import MobileNetv2_tf
 from models.mobilenetv2 import MobileNetv2
 from models.lenet5 import LeNet
+from sparse import sparse_optimizers
 import os
 import sys
 import time
@@ -56,7 +57,8 @@ class Trainer:
 
         self.y_true_cls = tf.argmax(self.y_true, axis=1)
 
-        self.y_pred = tf.nn.softmax(self.model.getOutput())
+        #self.y_pred = tf.nn.softmax(self.model.getOutput())
+        self.y_pred = self.model.getOutput()
 
         self.y_pred_cls = tf.argmax(self.y_pred, axis=1)
 
@@ -81,8 +83,14 @@ class Trainer:
         self.global_step = tf.Variable(0, trainable=False)
 
         self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=False)
+        self.sparse_optimizer = sparse_optimizers.SparseRigLOptimizer(
+            tf.train.MomentumOptimizer(self.lr, momentum=0.9, use_nesterov=True), begin_step=0 ,
+            end_step=25000, grow_init='zeros',
+            frequency=100,
+            drop_fraction=0.3,
+            drop_fraction_anneal='constant',
+            initial_acc_scale= 0., use_tpu=False).minimize(self.cost,self.global_step)
 
-        #self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate, epsilon=0.01).minimize(self.cost, self.global_step)
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost,self.global_step)
 
         self.correct_prediction = tf.equal(self.y_pred_cls, self.y_true_cls)
@@ -98,7 +106,7 @@ class Trainer:
         #pruning_hparams.end_pruning_step = 250
         pruning_hparams.sparsity_function_end_step = 10000
         pruning_hparams.pruning_frequency = 100
-        pruning_hparams.initial_sparsity= .3
+        #pruning_hparams.initial_sparsity= .3
         pruning_hparams.target_sparsity = .9
 
         # Create a pruning object using the pruning specification, sparsity seems to have priority over the hparam
@@ -183,6 +191,7 @@ class Trainer:
             # to the placeholder variables and then runs the optimizer.
 
             self.session.run(self.optimizer, feed_dict=feed_dict_train)
+            #self.session.run(self.sparse_optimizer, feed_dict=feed_dict_train)
             self.train_acc += self.session.run(self.accuracy, feed_dict=feed_dict_train)
             self.val_acc += self.session.run(self.accuracy, feed_dict=feed_dict_validate)
             self.train_loss += self.session.run(self.cost, feed_dict=feed_dict_train)
@@ -283,7 +292,8 @@ class Trainer:
             feed_dict_validate = {self.x: x_valid_batch,
                                   self.y_true: y_valid_batch}
 
-            self.session.run(self.optimizer, feed_dict=feed_dict_train)
+            #self.session.run(self.optimizer, feed_dict=feed_dict_train)
+            self.session.run(self.sparse_optimizer, feed_dict=feed_dict_train)
             self.train_acc += self.session.run(self.accuracy, feed_dict=feed_dict_train)
             self.val_acc += self.session.run(self.accuracy, feed_dict=feed_dict_validate)
             self.train_loss += self.session.run(self.cost, feed_dict=feed_dict_train)
@@ -330,7 +340,7 @@ class Trainer:
 
                     current_val_acc = self.val_acc
 
-                    if best_val_acc < current_val_acc and current_val_acc > 0.5:
+                    if best_val_acc < current_val_acc and current_val_acc > 0.1:
                         best_val_acc = current_val_acc
                         self.export(name= "_pruned_acc="+str(current_val_acc))
 
@@ -339,10 +349,14 @@ class Trainer:
                     self.train_loss = 0
                     self.val_loss = 0
 
+                    print("Sparsity of layers (should be 0)",
+                          self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
+                    mask_vals = self.session.run(pruning.get_masks())
+
 
         self.total_iterations += num_iterations
 
-        print("Sparsity of layers (should be 0)", self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
+
 
         # Ending time.
         end_time = time.time()

@@ -21,9 +21,9 @@ from __future__ import print_function
 
 import re
 import numpy as np
-from rigl import str_sparsities
+from sparse import str_sparsities
 import tensorflow.compat.v1 as tf
-from google_research.micronet_challenge import counting
+from sparse import counting
 
 DEFAULT_ERK_SCALE = 1.0
 
