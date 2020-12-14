@@ -5,5 +5,5 @@ checkpoints
 *.zip
 graphs
 .idea
-
+.DS_Store
 
