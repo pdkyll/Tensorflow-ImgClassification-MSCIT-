@@ -1,17 +1,17 @@
 from datetime import datetime
 
 now = datetime.now() # current date and time
-date_time = now.strftime("%Y/%m/%d/%H:%M:%S")
+date_time = now.strftime("%Y/%m/%d/%H-%M-%S")
 device = "cuda:0"
 
-train_path = 'data/cifar10png/train'
-val_path = 'data/cifar10png/val'
-test_path = 'data/cifar10png/test'
+train_path = r'C:\Users\hkuit164\Desktop\CNN_classification\data\CatDog\train'
+val_path = r'C:\Users\hkuit164\Desktop\CNN_classification\data\CatDog\val'
+test_path = r'C:\Users\hkuit164\Desktop\CNN_classification\data\CatDog\val'
 
-classes = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
+classes = ['cat', "dog"]
 total_class = len(classes)
 
-model_arch = "mobilenetv2_tf"
+model_arch = "mobilenetv2"
 
 if model_arch == "mobilenetv2" or "mobilenetv2_tf":
     img_size = 224
@@ -19,13 +19,13 @@ if model_arch == "mobilenetv2" or "mobilenetv2_tf":
 if model_arch == "lenet5":
     img_size = 32
 
-#is4train = False
-#is4oneitr = True
-#pretrained_checkpoint_dir = "./checkpoints/mobilenetv2/2020/11/06/16:27:35/mobilenetv2-1093"
+is4train = False
+is4oneitr = True
+pretrained_checkpoint_dir = "./checkpoints/mobilenetv2/2020/11/23/17-21-06/mobilenetv2-5460"
 
-is4train = True
-is4oneitr = False
-pretrained_checkpoint_dir = None
+# is4train = True
+# is4oneitr = False
+# pretrained_checkpoint_dir = None
 
 
 checkpoint_dir = "./checkpoints/" + model_arch + "/" + date_time + "/"

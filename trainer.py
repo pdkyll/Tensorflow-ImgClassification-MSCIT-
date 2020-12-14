@@ -83,13 +83,13 @@ class Trainer:
         self.global_step = tf.Variable(0, trainable=False)
 
         self.learning_rate = tf.train.exponential_decay(self.lr, self.global_step, self.step_rate, self.decay, staircase=False)
-        self.sparse_optimizer = sparse_optimizers.SparseRigLOptimizer(
-            tf.train.MomentumOptimizer(self.lr, momentum=0.9, use_nesterov=True), begin_step=0 ,
-            end_step=25000, grow_init='zeros',
-            frequency=100,
-            drop_fraction=0.3,
-            drop_fraction_anneal='constant',
-            initial_acc_scale= 0., use_tpu=False).minimize(self.cost,self.global_step)
+        # self.sparse_optimizer = sparse_optimizers.SparseRigLOptimizer(
+        #     tf.train.MomentumOptimizer(self.lr, momentum=0.9, use_nesterov=True), begin_step=0 ,
+        #     end_step=25000, grow_init='zeros',
+        #     frequency=100,
+        #     drop_fraction=0.3,
+        #     drop_fraction_anneal='constant',
+        #     initial_acc_scale= 0., use_tpu=False).minimize(self.cost,self.global_step)
 
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate).minimize(self.cost,self.global_step)
 
@@ -118,9 +118,11 @@ class Trainer:
         # self.savePath = os.path.join(exp_dir, "mobilenet2" + "checkpoints")
         self.session.run(tf.global_variables_initializer())
         if config.is4train == True:
+            #tf.reset_default_graph()
             self.saver = tf.train.Saver(max_to_keep=10)
             self.savePath = os.path.join(exp_dir, config.model_arch + "checkpoints")
         else:
+
             self.saver = tf.train.import_meta_graph(config.pretrained_checkpoint_dir + '.meta')
             self.saver.restore(self.session, config.pretrained_checkpoint_dir)
             #self.session.run(tf.global_variables_initializer())
@@ -243,13 +245,15 @@ class Trainer:
                         best_val_acc = current_val_acc
                         self.export(name= "acc="+str(current_val_acc))
 
-                    print("Sparsity of layers (should be 0)", self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
+                    #print("Sparsity of layers (should be 0)", self.session.run(tf.contrib.model_pruning.get_weight_sparsity()))
 
                     self.train_acc = 0
                     self.val_acc = 0
                     self.train_loss = 0
                     self.val_loss = 0
 
+            if config.is4oneitr == True:
+                self.export(name="_training=false")
 
         self.total_iterations += num_iterations
 

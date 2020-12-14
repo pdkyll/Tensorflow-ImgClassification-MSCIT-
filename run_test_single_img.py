@@ -30,6 +30,8 @@ class SingleImgTester:
 
         self.session = tf.Session()
 
+        #self.session.run(tf.global_variables_initializer())
+
         with tf.gfile.GFile(self.model_path, 'rb') as f:
             graph_def = tf.GraphDef()
             graph_def.ParseFromString(f.read())
@@ -80,7 +82,9 @@ class SingleImgTester:
 
             feed_dict_test = { self.x: images,}
             prediction = self.session.run(self.y_pred_cls, feed_dict=feed_dict_test)
+            prob = self.session.run(self.y_pred, feed_dict=feed_dict_test)
             print("Prediction: ", config.classes[prediction[0]])
+            print(prob)
 
     def test_by_webcam(self):
         images = []
@@ -118,5 +122,5 @@ class SingleImgTester:
         cv2.destroyAllWindows()
 
 if __name__ == '__main__':
-    T = SingleImgTester(model_path="weights/mobilenetv2/2020/11/06/16:27:35/mobilenetv2.pb")
-    T.test_by_img(image_path="./data/cifar10png/test/cat/0031.png")
+    T = SingleImgTester(model_path="weights/mobilenetv2/2020/11/23/19-00-16/mobilenetv2_training=false.pb")
+    T.test_by_img(image_path="./cat2.jpg")
